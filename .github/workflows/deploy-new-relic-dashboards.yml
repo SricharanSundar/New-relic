@@ -1,11 +1,15 @@
 name: Deploy New Relic Dashboards via Manifest
 
 on:
+  # 1. Automatic Trigger: Runs on a push to main affecting the dashboards directory
   push:
     branches:
       - main
     paths:
       - 'dashboards/**'
+
+  # 2. Manual Trigger: Allows you to run this workflow at any time from the Actions tab
+  workflow_dispatch:
 
 jobs:
   deploy-dashboards:
@@ -14,24 +18,34 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          # Fetch all history to compare HEAD with the previous commit for push triggers
+          # For manual runs, this just checks out the selected branch
           fetch-depth: 0
 
-      - name: Deploy Modified Dashboards Based on Manifest
+      - name: Deploy Modified/All Dashboards Based on Manifest
         env:
           ${{ toJSON(secrets) }}
         run: |
-          MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'dashboards/.*\.json$')
-          if [ -z "$MODIFIED_FILES" ]; then
-            echo "No dashboard JSON files were modified. Exiting."
-            exit 0
+          # If triggered by a push, find only modified files.
+          # If triggered manually (github.event_name == 'workflow_dispatch'), this will be empty.
+          if [ "${{ github.event_name }}" == "push" ]; then
+            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'dashboards/.*\.json$')
+            if [ -z "$MODIFIED_FILES" ]; then
+              echo "No dashboard JSON files were modified in the push. Exiting."
+              exit 0
+            fi
+            echo "Processing modified files from push: $MODIFIED_FILES"
+          else
+            echo "Manual trigger detected. All files in the manifest will be checked for deployment."
           fi
-          
-          echo "Processing modified files: $MODIFIED_FILES"
+
           echo "------------------------------------------------------"
 
           jq -r -c '.[]' dashboards/manifest.json | while read -r entry; do
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
-            if ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
+
+            # If this was a push event, only deploy files that were modified.
+            if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
               continue
             fi
             
@@ -50,7 +64,7 @@ jobs:
                 exit 1
             fi
 
-            curl -s -X POST https://api/newrelic.com/graphql \
+            curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
               -d "${GRAPHQL_MUTATION}"
