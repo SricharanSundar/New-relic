@@ -1,0 +1,32 @@
+{
+  "name": "sricharan",
+  "description": null,
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDIxNjU2NTQy",
+      "name": "sricharan",
+      "description": null,
+      "widgets": [
+        {
+          "id": "484098558",
+          "title": null,
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# Hola! नमस्ते! Hello! やあ! ![New Relic logo](https://newrelic.com/static-assets/images/icons/avatar-newrelic.png)\n## Use this to add context for the data in your dashboards\n> It can be `code`, **important**, *slightly highlighted*, ~~no longer relevant~~.\n\nAdd your bullets—for unordered items:\n- You can navigate within the platform by [adding links like this](https://one.newrelic.com/dashboards)\n- Or you can link [external websites like your repositories](https://github.com/newrelic)\n---\nOr a TODO list:\n- [x] Add links to related dashboard pages\n- [ ] Create a widget facet by environment to use it as a filter\n\n### Add your own context—[here's what we support](https://github.github.com/gfm/)."
+          }
+        }
+      ]
+    }
+  ],
+  "variables": []
+}
