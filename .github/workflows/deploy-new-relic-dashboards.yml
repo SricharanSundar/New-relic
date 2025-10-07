@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Dashboards/**'
+      - 'Dashboards/**' # <-- CHANGED
 
   workflow_dispatch:
 
@@ -19,12 +19,11 @@ jobs:
           fetch-depth: 0
 
       - name: Deploy Modified/All Dashboards Based on Manifest
-        # This is the corrected way to pass secrets to the script
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
           if [ "${{ github.event_name }}" == "push" ]; then
-            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'Dashboards/.*\.json$')
+            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'Dashboards/.*\.json$') # <-- CHANGED
             if [ -z "$MODIFIED_FILES" ]; then
               echo "No dashboard JSON files were modified in the push. Exiting."
               exit 0
@@ -36,7 +35,7 @@ jobs:
 
           echo "------------------------------------------------------"
 
-          jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do
+          jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do # <-- CHANGED
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
 
             if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
@@ -45,8 +44,6 @@ jobs:
             
             ACCOUNT_ID=$(echo "$entry" | jq -r '.accountId')
             API_KEY_SECRET_NAME=$(echo "$entry" | jq -r '.apiKeySecretName')
-            
-            # This is the corrected line to extract the specific secret using jq
             API_KEY=$(echo "$ALL_SECRETS" | jq -r ".\"$API_KEY_SECRET_NAME\"")
 
             if [ -z "$API_KEY" ] || [ "$API_KEY" == "null" ]; then
