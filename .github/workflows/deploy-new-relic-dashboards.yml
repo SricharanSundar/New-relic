@@ -19,7 +19,6 @@ jobs:
           fetch-depth: 0
 
       - name: Deploy Modified/All Dashboards Based on Manifest
-        # This is the corrected way to pass secrets to the script
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
@@ -45,26 +44,41 @@ jobs:
             
             ACCOUNT_ID=$(echo "$entry" | jq -r '.accountId')
             API_KEY_SECRET_NAME=$(echo "$entry" | jq -r '.apiKeySecretName')
-            
-            # This is the corrected line to extract the specific secret using jq
             API_KEY=$(echo "$ALL_SECRETS" | jq -r ".\"$API_KEY_SECRET_NAME\"")
 
             if [ -z "$API_KEY" ] || [ "$API_KEY" == "null" ]; then
-                echo "::error::Secret '$API_KEY_SECRET_NAME' could not be found. Please check your manifest and GitHub repository secrets."
+                echo "::error::Secret '$API_KEY_SECRET_NAME' could not be found."
                 exit 1
             fi
 
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            DASHBOARD_JSON=$(cat "$FILE_PATH" | jq -c . | sed 's/"/\\"/g')
-            GRAPHQL_MUTATION="{\"query\": \"mutation { dashboardCreateOrUpdate(accountId: ${ACCOUNT_ID}, dashboard: \\\"${DASHBOARD_JSON}\\\") { guid } }\"}"
-
-            curl -s -X POST https://api.newrelic.com/graphql \
+            # === SCRIPT UPDATE START ===
+            # This new method uses jq to safely build the GraphQL payload, preventing parsing errors.
+            # 1. Read the dashboard JSON content.
+            DASHBOARD_CONTENT=$(cat "$FILE_PATH")
+            # 2. Build the final GraphQL mutation using jq to handle special characters correctly.
+            GRAPHQL_MUTATION=$(jq -n \
+              --arg acctId "$ACCOUNT_ID" \
+              --arg dashboard "$DASHBOARD_CONTENT" \
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreateOrUpdate(accountId: $accountId, dashboard: $dashboardJson) { guid } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
+            # === SCRIPT UPDATE END ===
+            
+            # Use a variable to store the curl response to check for errors
+            RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
-              -d "${GRAPHQL_MUTATION}"
+              -d "${GRAPHQL_MUTATION}")
             
-            echo -e "\nSuccessfully deployed $FILE_PATH to Account ID $ACCOUNT_ID."
+            # Check if the response contains the word "errors"
+            if echo "$RESPONSE" | grep -q "errors"; then
+              echo "::error::API call failed for $FILE_PATH. Response from New Relic:"
+              echo "$RESPONSE"
+              exit 1
+            else
+              echo "Successfully deployed $FILE_PATH to Account ID $ACCOUNT_ID."
+              echo "Response from New Relic: $RESPONSE"
+            fi
             echo "------------------------------------------------------"
           done
