@@ -1,16 +1,476 @@
 {
-  "name": "sricharan",
+  "name": ".NET-sricharan",
   "description": null,
   "permissions": "PUBLIC_READ_WRITE",
   "pages": [
     {
-      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDIxNjU2NTQy",
-      "name": "sricharan",
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDQzNTU1ODI5",
+      "name": "Overview",
       "description": null,
       "widgets": [
         {
-          "id": "484098558",
+          "id": "484099106",
           "title": null,
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 2,
+            "height": 2
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "![logo](https://raw.githubusercontent.com/newrelic/newrelic-quickstarts/265e46a84e966c07302d570e77fc9561d3abe636/quickstarts/dotnet/dotnet/logo.svg)"
+          }
+        },
+        {
+          "id": "484099107",
+          "title": "Total Transactions by Application (click on the app name to filter)",
+          "layout": {
+            "column": 3,
+            "row": 1,
+            "width": 4,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "FROM Transaction SELECT count(*) FACET appName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099108",
+          "title": "Memory Allocation/Working Set (MB)",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 4,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS 'Memory Working Set' FROM Metric WHERE metricTimesliceName LIKE '%Memory/WorkingSet%' TIMESERIES AUTO "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099109",
+          "title": "HTTP Status Code",
+          "layout": {
+            "column": 11,
+            "row": 1,
+            "width": 2,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT apdex(newrelic.timeslice.value) FROM Metric WHERE metricTimesliceName LIKE 'Apdex/StatusCode/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099110",
+          "title": null,
+          "layout": {
+            "column": 1,
+            "row": 3,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "**About**\n\nInstrument your application with New Relic - [Add Data](https://one.newrelic.com/catalog-pack-details?state=fbb63ea7-12ed-4703-31d7-544ca12b03b3).\n\nUnable to find data in your dashboard? - [Troubleshoot here](\nhttps://docs.newrelic.com/docs/apm/agents/net-agent/troubleshooting/no-data-appears-net/)\n\n[Please rate this dashboard](https://docs.google.com/forms/d/e/1FAIpQLSclR38J8WbbB2J1tHnllKUkzWZkJhf4SrJGyavpMd4t82NjnQ/viewform?usp=pp_url&entry.1615922415=.Net&entry.358368110=https://onenr.io/0ERzlZYPvQr) here and let us know how we can improve it for you.\n"
+          }
+        },
+        {
+          "id": "484099111",
+          "title": "Slowest Query Time",
+          "layout": {
+            "column": 3,
+            "row": 5,
+            "width": 5,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(apm.service.datastore.operation.duration * 1000) FROM Metric WHERE datastoreType = 'MSSQL' AND `table` != '' AND `table` != '(subquery)' FACET `datastoreType`, `table`, `operation` LIMIT 5 TIMESERIES "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099112",
+          "title": "Most Time Consuming",
+          "layout": {
+            "column": 8,
+            "row": 5,
+            "width": 5,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT sum(apm.service.datastore.operation.duration * 1000) FROM Metric  FACET `datastoreType`, `table`, `operation` LIMIT 5 TIMESERIES WHERE datastoreType = 'MSSQL' AND `table` != '' AND `table` != '(subquery)'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099113",
+          "title": "CPU Utilization",
+          "layout": {
+            "column": 1,
+            "row": 6,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1000 FROM Metric WHERE metricTimesliceName LIKE '%CPU/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099114",
+          "title": "Apdex Score",
+          "layout": {
+            "column": 1,
+            "row": 9,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT apdex(apm.service.apdex) as 'App server', apdex(apm.service.apdex.user) as 'End user' FROM Metric LIMIT MAX"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099115",
+          "title": "Memory Used by Large Object Heap",
+          "layout": {
+            "column": 3,
+            "row": 9,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/LOH/Size(MB)` FROM Metric WHERE metricTimesliceName LIKE 'GC/LOH/Size%' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099116",
+          "title": "Number of References to Objects",
+          "layout": {
+            "column": 7,
+            "row": 9,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+3 AS `GC/Handles` FROM Metric WHERE metricTimesliceName LIKE 'GC/Handles%' TIMESERIES "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099117",
+          "title": "Network Traffic",
+          "layout": {
+            "column": 10,
+            "row": 9,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "SELECT latest(transmitBytesPerSecond) AS `Transmit Bytes per Second`, latest(receiveBytesPerSecond) AS `Receive Bytes per Second` FROM NetworkSample TIMESERIES AUTO"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDQzNTU1ODMw",
+      "name": "Thread Pool",
+      "description": null,
+      "widgets": [
+        {
+          "id": "484099118",
+          "title": "Throughput",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 5,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 FROM Metric WHERE metricTimesliceName LIKE '%Threadpool/Throughput/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099119",
+          "title": "Completion Threads",
+          "layout": {
+            "column": 6,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1000 FROM Metric WHERE metricTimesliceName LIKE '%Threadpool/Completion/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099120",
+          "title": "Worker Threads",
+          "layout": {
+            "column": 10,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1000 FROM Metric WHERE metricTimesliceName LIKE '%Threadpool/Worker/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDQzNTU1ODMx",
+      "name": "Garbage Collection",
+      "description": null,
+      "widgets": [
+        {
+          "id": "484099121",
+          "title": "Generation 0 Heap",
           "layout": {
             "column": 1,
             "row": 1,
@@ -19,10 +479,1081 @@
           },
           "linkedEntityGuids": null,
           "visualization": {
-            "id": "viz.markdown"
+            "id": "viz.bar"
           },
           "rawConfiguration": {
-            "text": "# Hola! नमस्ते! Hello! やあ! ![New Relic logo](https://newrelic.com/static-assets/images/icons/avatar-newrelic.png)\n## Use this to add context for the data in your dashboards\n> It can be `code`, **important**, *slightly highlighted*, ~~no longer relevant~~.\n\nAdd your bullets—for unordered items:\n- You can navigate within the platform by [adding links like this](https://one.newrelic.com/dashboards)\n- Or you can link [external websites like your repositories](https://github.com/newrelic)\n---\nOr a TODO list:\n- [x] Add links to related dashboard pages\n- [ ] Create a widget facet by environment to use it as a filter\n\n### Add your own context—[here's what we support](https://github.github.com/gfm/)."
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 FROM Metric WHERE metricTimesliceName LIKE 'GC/Gen0/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099122",
+          "title": "Available Memory to be Allocated",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/Gen0/Size(MB)` FROM Metric WHERE metricTimesliceName = 'GC/Gen0/Size' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099123",
+          "title": "Active References Promoted From Generation 0 to Generation 1",
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/Gen0/Promoted(MB)` FROM Metric WHERE metricTimesliceName = 'GC/Gen0/Promoted' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099124",
+          "title": "Generation 1 Heap",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 FROM Metric WHERE metricTimesliceName LIKE 'GC/Gen1/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099125",
+          "title": "Memory Used in Generation 1 Heap",
+          "layout": {
+            "column": 5,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/Gen1/Size(MB)` FROM Metric WHERE metricTimesliceName = 'GC/Gen1/Size' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099126",
+          "title": "Active References Promoted From Generation 1 to Generation 2",
+          "layout": {
+            "column": 9,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/Gen1/Promoted(MB)` FROM Metric WHERE metricTimesliceName = 'GC/Gen1/Promoted' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099127",
+          "title": "Generation 2 Heap",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 FROM Metric WHERE metricTimesliceName LIKE 'GC/Gen2/%' FACET metricTimesliceName"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099128",
+          "title": "Memory Used in Generation 2 Heap",
+          "layout": {
+            "column": 5,
+            "row": 7,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/Gen2/Size(MB)` FROM Metric WHERE metricTimesliceName = 'GC/Gen2/Size' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099129",
+          "title": "Unpromoted Active References",
+          "layout": {
+            "column": 9,
+            "row": 7,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 AS `GC/Gen2/Survived(MB)` FROM Metric WHERE metricTimesliceName = 'GC/Gen2/Survived' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDQzNTU1ODMy",
+      "name": "Transactions",
+      "description": null,
+      "widgets": [
+        {
+          "id": "484099130",
+          "title": "Transaction Errors",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 5,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT count(*) FROM TransactionError WHERE `error.expected` IS FALSE OR `error.expected` IS NULL FACET `error.class`, `transactionUiName`, `error.message` TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099131",
+          "title": "Most Popular Incoming HTTP Requests",
+          "layout": {
+            "column": 6,
+            "row": 1,
+            "width": 7,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE (transactionType = 'Web') SINCE last week EXTRAPOLATE FACET name"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099132",
+          "title": "Slowest Average Response Time",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT filter(rate(sum(apm.service.transaction.duration), 1 second), WHERE transactionName IN ('WebTransaction/ASP/ROOT')) as 'ROOT', filter(rate(sum(apm.service.transaction.duration), 1 second), WHERE transactionName IN ('WebTransaction/StatusCode/302')) as '302', filter(rate(sum(apm.service.transaction.duration), 1 second), WHERE transactionName IN ('WebTransaction/ASP/Basket/Checkout')) as 'Basket/Checkout', filter(rate(sum(apm.service.transaction.duration), 1 second), WHERE transactionName IN ('WebTransaction/ASP/Basket')) as 'Basket', filter(rate(sum(apm.service.transaction.duration), 1 second), WHERE transactionName IN ('WebTransaction/ASP/images/products/1.png')) as 'images/products/1.png' FROM Metric WHERE (transactionType = 'Web') LIMIT 5 TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099133",
+          "title": "Web Transactions Time",
+          "layout": {
+            "column": 5,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT filter(average(apm.service.overview.web * 1000), WHERE segmentName like '.NET') as '.NET', filter(average(apm.service.overview.web * 1000), WHERE segmentName like 'MSSQL') as 'MSSQL' FROM Metric LIMIT MAX TIMESERIES AUTO"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099134",
+          "title": "Top 5 Slowest Transactions",
+          "layout": {
+            "column": 9,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT max(duration) FROM Transaction WHERE (transactionType = 'Web') SINCE 1 week ago LIMIT 5 EXTRAPOLATE FACET name"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099135",
+          "title": "Throughput Today Compared With 1 Week Ago",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 5,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "SELECT count(*) from Transaction TIMESERIES 1 hour since today COMPARE WITH 1 week ago"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099136",
+          "title": "Middleware Pipeline",
+          "layout": {
+            "column": 6,
+            "row": 7,
+            "width": 5,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1000 AS `DotNet/OrderController/Detail` FROM Metric WHERE metricTimesliceName LIKE 'DotNet/%' FACET metricTimesliceName TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099137",
+          "title": "Transactions Overview",
+          "layout": {
+            "column": 11,
+            "row": 7,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "dataFormatters": [],
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "FROM Transaction SELECT count(*) as 'Total transactions', average(duration) as 'Avg duration (s)', percentile(duration, 90) as 'Slowest 10% (s)', percentage(count(*), WHERE error is false) AS 'Success rate'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099138",
+          "title": "Transactions Day By Day ",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.stacked-bar"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "FROM Transaction SELECT count(*), percentage(count(*), WHERE error IS false) FACET dateOf(timestamp) TIMESERIES AUTO "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099139",
+          "title": "Average Transaction Duration Today Compared With 1 Week Ago",
+          "layout": {
+            "column": 5,
+            "row": 10,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "dataFormatters": [],
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "SELECT average(duration) FROM Transaction TIMESERIES SINCE today COMPARE WITH 1 week ago"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099140",
+          "title": "Adpex Score Today Compared With 1 Week Ago",
+          "layout": {
+            "column": 9,
+            "row": 10,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "SELECT apdex(duration, t: 0.4) FROM Transaction TIMESERIES SINCE today COMPARE WITH 1 week ago"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDQzNTU1ODMz",
+      "name": "Errors",
+      "description": null,
+      "widgets": [
+        {
+          "id": "484099141",
+          "title": "Top 10 Failed Transactions",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 12,
+            "height": 2
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": true
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "Select percentage(count(*), WHERE error IS true) from Transaction WHERE transactionType = 'Web' facet name SINCE last week"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099142",
+          "title": "Transactions Errors Today Compared With 1 Week Ago",
+          "layout": {
+            "column": 1,
+            "row": 3,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "SELECT count(*) from Transaction where response.status = '404' and transactionType = 'Web' TIMESERIES 10 minutes since today COMPARE WITH 1 week ago"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "id": "484099143",
+          "title": "Transaction Errors Day By Day",
+          "layout": {
+            "column": 5,
+            "row": 3,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "dc5b694f-9125-4c64-8e4e-c52e604c8088.range-chart"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "FROM TransactionError SELECT count(*), percentage(count(*), WHERE error IS true) FACET dateOf(timestamp) SINCE 1 week ago"
+              }
+            ],
+            "other": {
+              "visible": false
+            }
+          }
+        },
+        {
+          "id": "484099144",
+          "title": "Errors Overview",
+          "layout": {
+            "column": 9,
+            "row": 3,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "FROM Transaction SELECT count(*) as 'Total Transactions', percentage(count(*), WHERE error IS true) as 'Failed Transactions (%)', count(*) * percentage(count(*), WHERE error IS true) / 100 as 'Failed Transactions'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "id": "484099145",
+          "title": "Latest Error",
+          "layout": {
+            "column": 11,
+            "row": 3,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "dataFormatters": [],
+            "nrqlQueries": [
+              {
+                "accountId": 4487288,
+                "query": "FROM TransactionError SELECT latest(timestamp) as 'Latest Error' SINCE last week"
+              }
+            ],
+            "thresholds": []
+          }
+        }
+      ]
+    },
+    {
+      "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfDQzNTU1ODM0",
+      "name": "Alerts",
+      "description": null,
+      "widgets": [
+        {
+          "id": "484099146",
+          "title": "Transaction Errors",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT count(apm.service.error.count) / count(apm.service.transaction.duration) * 100 as 'Web Errors' FROM Metric WHERE transactionType = 'Web'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 10
+              },
+              {
+                "alertSeverity": "WARNING",
+                "value": 5
+              }
+            ]
+          }
+        },
+        {
+          "id": "484099147",
+          "title": "Apdex Score",
+          "layout": {
+            "column": 4,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT apdex(duration, t: 0.5) FROM Transaction"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "WARNING",
+                "value": 0.5
+              },
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "484099148",
+          "title": "High CPU Utilization",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT rate(sum(apm.service.cpu.usertime.utilization), 1 second) * 100 FROM Metric"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 90
+              },
+              {
+                "alertSeverity": "WARNING",
+                "value": 85
+              }
+            ]
+          }
+        },
+        {
+          "id": "484099149",
+          "title": "Memory Usage",
+          "layout": {
+            "column": 10,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(memoryUsedBytes/memoryTotalBytes) * 100 FROM SystemSample"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 90
+              },
+              {
+                "alertSeverity": "WARNING",
+                "value": 85
+              }
+            ]
+          }
+        },
+        {
+          "id": "484099150",
+          "title": "Generation 0 Hits",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1000 FROM Metric WHERE metricTimesliceName = 'GC/Gen0/Size'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 256000
+              },
+              {
+                "alertSeverity": "WARNING",
+                "value": 250000
+              }
+            ]
+          }
+        },
+        {
+          "id": "484099151",
+          "title": "Generation 1 Hits",
+          "layout": {
+            "column": 5,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 FROM Metric WHERE metricTimesliceName = 'GC/Gen1/Size'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 8000000
+              },
+              {
+                "alertSeverity": "WARNING",
+                "value": 2000000
+              }
+            ]
+          }
+        },
+        {
+          "id": "484099152",
+          "title": "Generation 2 Hits",
+          "layout": {
+            "column": 9,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  4487288
+                ],
+                "query": "SELECT average(newrelic.timeslice.value) * 1e+6 FROM Metric WHERE metricTimesliceName = 'GC/Gen2/Size'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 10000000
+              },
+              {
+                "alertSeverity": "WARNING",
+                "value": 9000000
+              }
+            ]
           }
         }
       ]
