@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'dashboards/**'
+      - 'Dashboards/**'
 
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ jobs:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
           if [ "${{ github.event_name }}" == "push" ]; then
-            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'dashboards/.*\.json$')
+            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'Dashboards/.*\.json$')
             if [ -z "$MODIFIED_FILES" ]; then
               echo "No dashboard JSON files were modified in the push. Exiting."
               exit 0
@@ -36,7 +36,7 @@ jobs:
 
           echo "------------------------------------------------------"
 
-          jq -r -c '.[]' dashboards/manifest.json | while read -r entry; do
+          jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
 
             if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
