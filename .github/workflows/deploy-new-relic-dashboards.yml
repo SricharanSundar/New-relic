@@ -1,14 +1,12 @@
 name: Deploy New Relic Dashboards via Manifest
 
 on:
-  # 1. Automatic Trigger: Runs on a push to main affecting the dashboards directory
   push:
     branches:
       - main
     paths:
       - 'dashboards/**'
 
-  # 2. Manual Trigger: Allows you to run this workflow at any time from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -18,16 +16,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          # Fetch all history to compare HEAD with the previous commit for push triggers
-          # For manual runs, this just checks out the selected branch
           fetch-depth: 0
 
       - name: Deploy Modified/All Dashboards Based on Manifest
+        # This is the corrected way to pass secrets to the script
         env:
-          ${{ toJSON(secrets) }}
+          ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
-          # If triggered by a push, find only modified files.
-          # If triggered manually (github.event_name == 'workflow_dispatch'), this will be empty.
           if [ "${{ github.event_name }}" == "push" ]; then
             MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'dashboards/.*\.json$')
             if [ -z "$MODIFIED_FILES" ]; then
@@ -44,7 +39,6 @@ jobs:
           jq -r -c '.[]' dashboards/manifest.json | while read -r entry; do
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
 
-            # If this was a push event, only deploy files that were modified.
             if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
               continue
             fi
@@ -52,17 +46,19 @@ jobs:
             ACCOUNT_ID=$(echo "$entry" | jq -r '.accountId')
             API_KEY_SECRET_NAME=$(echo "$entry" | jq -r '.apiKeySecretName')
             
+            # This is the corrected line to extract the specific secret using jq
+            API_KEY=$(echo "$ALL_SECRETS" | jq -r ".\"$API_KEY_SECRET_NAME\"")
+
+            if [ -z "$API_KEY" ] || [ "$API_KEY" == "null" ]; then
+                echo "::error::Secret '$API_KEY_SECRET_NAME' could not be found. Please check your manifest and GitHub repository secrets."
+                exit 1
+            fi
+
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
             DASHBOARD_JSON=$(cat "$FILE_PATH" | jq -c . | sed 's/"/\\"/g')
             GRAPHQL_MUTATION="{\"query\": \"mutation { dashboardCreateOrUpdate(accountId: ${ACCOUNT_ID}, dashboard: \\\"${DASHBOARD_JSON}\\\") { guid } }\"}"
-
-            API_KEY="${!API_KEY_SECRET_NAME}"
-            if [ -z "$API_KEY" ]; then
-                echo "::error::Secret $API_KEY_SECRET_NAME is not set or empty."
-                exit 1
-            fi
 
             curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
