@@ -64,7 +64,7 @@ jobs:
               --arg dashboard "$TRANSFORMED_DASHBOARD" \
               '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
             
-            RESPONSE=$(curl -s -X POST https://one.newrelic.com/graphql \
+            RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
               -d "${GRAPHQL_MUTATION}")
