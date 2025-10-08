@@ -54,24 +54,18 @@ jobs:
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            # === SCRIPT UPDATE START ===
-            # This new method uses jq to safely build the GraphQL payload, preventing parsing errors.
-            # 1. Read the dashboard JSON content.
             DASHBOARD_CONTENT=$(cat "$FILE_PATH")
-            # 2. Build the final GraphQL mutation using jq to handle special characters correctly.
+            # This is the line that has been corrected
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
               --arg dashboard "$DASHBOARD_CONTENT" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreateOrUpdate(accountId: $accountId, dashboard: $dashboardJson) { guid } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
-            # === SCRIPT UPDATE END ===
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { guid } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}') # <-- CORRECTED MUTATION NAME
             
-            # Use a variable to store the curl response to check for errors
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
               -d "${GRAPHQL_MUTATION}")
             
-            # Check if the response contains the word "errors"
             if echo "$RESPONSE" | grep -q "errors"; then
               echo "::error::API call failed for $FILE_PATH. Response from New Relic:"
               echo "$RESPONSE"
