@@ -66,7 +66,9 @@ jobs:
               # 4. Delete the "linkedEntityGuids" from all widgets.
               del(.pages[].widgets[].linkedEntityGuids) |
               # 5. Hoist the contents of "rawConfiguration" up to the widget level.
-              (.pages[].widgets[] |= . + .rawConfiguration | del(.rawConfiguration))
+              (.pages[].widgets[] |= . + .rawConfiguration | del(.rawConfiguration)) |
+              # 6. Delete the "guid" from all pages (FINAL FIX).
+              del(.pages[].guid)
             ' "$FILE_PATH")
 
             # Build the GraphQL payload with the fully corrected dashboard content
