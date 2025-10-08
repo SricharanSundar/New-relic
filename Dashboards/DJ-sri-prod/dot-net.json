@@ -27,14 +27,14 @@
         },
         {
           "id": "484099107",
-          "title": "Total Transactions by Application (click on the app name to filter)",
+          "title": "Total Transactions by Application (click on the app name to filter) SRICHARAN",
           "layout": {
             "column": 3,
             "row": 1,
             "width": 4,
             "height": 4
           },
-          "linkedEntityGuids": null,
+          "linkedEntityGuids": [],
           "visualization": {
             "id": "viz.bar"
           },
