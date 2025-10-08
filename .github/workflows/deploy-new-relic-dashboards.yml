@@ -54,13 +54,26 @@ jobs:
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            TRANSFORMED_DASHBOARD=$(jq '(.guid = .pages[0].guid) | del(.variables) | del(.pages[].widgets[].id) | del(.pages[].widgets[].linkedEntityGuids)' "$FILE_PATH")
+            # === FINAL TRANSFORMATION LOGIC ===
+            # This multi-line jq command performs all required transformations for API compatibility.
+            TRANSFORMED_DASHBOARD=$(jq '
+              # 1. Copy the guid from the first page to the top level.
+              (.guid = .pages[0].guid) |
+              # 2. Delete the invalid top-level "variables" field.
+              del(.variables) |
+              # 3. Delete the "id" from all widgets.
+              del(.pages[].widgets[].id) |
+              # 4. Delete the "linkedEntityGuids" from all widgets.
+              del(.pages[].widgets[].linkedEntityGuids) |
+              # 5. Hoist the contents of "rawConfiguration" up to the widget level.
+              (.pages[].widgets[] |= . + .rawConfiguration | del(.rawConfiguration))
+            ' "$FILE_PATH")
 
-            # Build the GraphQL payload with the CORRECTED flag (--argjson)
+            # Build the GraphQL payload with the fully corrected dashboard content
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
               --argjson dashboard "$TRANSFORMED_DASHBOARD" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}') # <-- CORRECTED
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
             
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
