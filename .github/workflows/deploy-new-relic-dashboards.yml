@@ -41,7 +41,7 @@ jobs:
             if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
               continue
             fi
-            
+
             ACCOUNT_ID=$(echo "$entry" | jq -r '.accountId')
             API_KEY_SECRET_NAME=$(echo "$entry" | jq -r '.apiKeySecretName')
             API_KEY=$(echo "$ALL_SECRETS" | jq -r ".\"$API_KEY_SECRET_NAME\"")
@@ -54,34 +54,24 @@ jobs:
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            # === FINAL TRANSFORMATION LOGIC ===
-            # This multi-line jq command performs all required transformations for API compatibility.
-            TRANSFORMED_DASHBOARD=$(jq '
-              # 1. Copy the guid from the first page to the top level.
-              (.guid = .pages[0].guid) |
-              # 2. Delete the invalid top-level "variables" field.
-              del(.variables) |
-              # 3. Delete the "id" from all widgets.
-              del(.pages[].widgets[].id) |
-              # 4. Delete the "linkedEntityGuids" from all widgets.
-              del(.pages[].widgets[].linkedEntityGuids) |
-              # 5. Hoist the contents of "rawConfiguration" up to the widget level.
-              (.pages[].widgets[] |= . + .rawConfiguration | del(.rawConfiguration)) |
-              # 6. Delete the "guid" from all pages (FINAL FIX).
-              del(.pages[].guid)
-            ' "$FILE_PATH")
-
-            # Build the GraphQL payload with the fully corrected dashboard content
+            # === SCRIPT UPDATE START ===
+            # This new method uses jq to safely build the GraphQL payload, preventing parsing errors.
+            # 1. Read the dashboard JSON content.
+            DASHBOARD_CONTENT=$(cat "$FILE_PATH")
+            # 2. Build the final GraphQL mutation using jq to handle special characters correctly.
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
-              --argjson dashboard "$TRANSFORMED_DASHBOARD" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
-            
+              --arg dashboard "$DASHBOARD_CONTENT" \
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreateOrUpdate(accountId: $accountId, dashboard: $dashboardJson) { guid } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
+            # === SCRIPT UPDATE END ===
+
+            # Use a variable to store the curl response to check for errors
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
               -d "${GRAPHQL_MUTATION}")
-            
+
+            # Check if the response contains the word "errors"
             if echo "$RESPONSE" | grep -q "errors"; then
               echo "::error::API call failed for $FILE_PATH. Response from New Relic:"
               echo "$RESPONSE"
@@ -92,3 +82,4 @@ jobs:
             fi
             echo "------------------------------------------------------"
           done
+ 
