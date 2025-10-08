@@ -54,18 +54,15 @@ jobs:
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            # === UPDATED TRANSFORMATION LOGIC ===
-            # This now performs all three required transformations:
-            # 1. Copies the guid from the first page to the top level.
-            # 2. Deletes the invalid top-level "variables" field.
-            # 3. Deletes the "id" field from all widgets.
-            TRANSFORMED_DASHBOARD=$(jq '(.guid = .pages[0].guid) | del(.variables) | del(.pages[].widgets[].id)' "$FILE_PATH")
+            # === FINAL TRANSFORMATION LOGIC ===
+            # This performs all four required transformations for API compatibility.
+            TRANSFORMED_DASHBOARD=$(jq '(.guid = .pages[0].guid) | del(.variables) | del(.pages[].widgets[].id) | del(.pages[].widgets[].linkedEntityGuids)' "$FILE_PATH") # <-- FINAL CORRECTION
 
-            # Build the GraphQL payload with the CORRECTED result query
+            # Build the GraphQL payload with the fully corrected dashboard content
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
               --arg dashboard "$TRANSFORMED_DASHBOARD" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}') # <-- CORRECTED
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
             
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
