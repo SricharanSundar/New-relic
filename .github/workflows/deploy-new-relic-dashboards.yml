@@ -1,7 +1,12 @@
 name: Deploy New Relic Dashboards via Manifest
 
 on:
-  # This is now the ONLY trigger, enabling manual runs from the Actions tab
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dashboards/**'
+
   workflow_dispatch:
 
 jobs:
@@ -13,16 +18,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Deploy All Dashboards Based on Manifest
+      - name: Deploy Modified/All Dashboards Based on Manifest
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
-          echo "Manual trigger detected. All files in the manifest will be deployed."
+          if [ "${{ github.event_name }}" == "push" ]; then
+            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'Dashboards/.*\.json$')
+            if [ -z "$MODIFIED_FILES" ]; then
+              echo "No dashboard JSON files were modified in the push. Exiting."
+              exit 0
+            fi
+            echo "Processing modified files from push: $MODIFIED_FILES"
+          else
+            echo "Manual trigger detected. All files in the manifest will be checked for deployment."
+          fi
+
           echo "------------------------------------------------------"
 
-          # This loop now runs for every dashboard in the manifest file
           jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
+
+            if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
+              continue
+            fi
             
             ACCOUNT_ID=$(echo "$entry" | jq -r '.accountId')
             API_KEY_SECRET_NAME=$(echo "$entry" | jq -r '.apiKeySecretName')
@@ -36,14 +54,13 @@ jobs:
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            # This performs all four required transformations for API compatibility.
             TRANSFORMED_DASHBOARD=$(jq '(.guid = .pages[0].guid) | del(.variables) | del(.pages[].widgets[].id) | del(.pages[].widgets[].linkedEntityGuids)' "$FILE_PATH")
 
-            # Build the GraphQL payload with the fully corrected dashboard content
+            # Build the GraphQL payload with the CORRECTED flag (--argjson)
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
-              --arg dashboard "$TRANSFORMED_DASHBOARD" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
+              --argjson dashboard "$TRANSFORMED_DASHBOARD" \
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}') # <-- CORRECTED
             
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
