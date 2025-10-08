@@ -54,12 +54,18 @@ jobs:
             echo "Deploying changes for: $FILE_PATH"
             echo "Target Account ID: $ACCOUNT_ID"
 
-            DASHBOARD_CONTENT=$(cat "$FILE_PATH")
-            # This is the line that has been corrected
+            # === TRANSFORMATION LOGIC START ===
+            # This command reads the original JSON and transforms it into the format the API needs.
+            # 1. Copies the guid from the first page (.pages[0].guid) to the top level (.guid).
+            # 2. Deletes the invalid top-level "variables" field.
+            TRANSFORMED_DASHBOARD=$(jq '(.guid = .pages[0].guid) | del(.variables)' "$FILE_PATH")
+            # === TRANSFORMATION LOGIC END ===
+
+            # Build the GraphQL payload using the TRANSFORMED dashboard content
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
-              --arg dashboard "$DASHBOARD_CONTENT" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { guid } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}') # <-- CORRECTED MUTATION NAME
+              --arg dashboard "$TRANSFORMED_DASHBOARD" \
+              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entity { guid } } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
             
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
