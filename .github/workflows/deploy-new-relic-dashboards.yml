@@ -23,7 +23,7 @@ jobs:
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
-          # Determine which dashboards to deploy
+          # Detect modified files if triggered by a push
           if [ "${{ github.event_name }}" == "push" ]; then
             MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'Dashboards/.*\.json$')
             if [ -z "$MODIFIED_FILES" ]; then
@@ -37,11 +37,11 @@ jobs:
 
           echo "------------------------------------------------------"
 
-          # Loop over each entry in the manifest
+          # Loop through each manifest entry
           jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
 
-            # Skip unchanged files during push
+            # Skip unmodified files in push event
             if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
               continue
             fi
@@ -70,25 +70,25 @@ jobs:
               exit 1
             fi
 
-            # Build GraphQL mutation payload
+            # Build GraphQL mutation using valid return fields
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
               --arg dashboard "$DASHBOARD_CONTENT" \
               '{
-                query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { guid name } }",
+                query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }",
                 variables: {
                   accountId: ($acctId | tonumber),
                   dashboardJson: ($dashboard | fromjson)
                 }
               }')
 
-            # Execute API request
+            # Execute the API request
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
               -d "${GRAPHQL_MUTATION}")
 
-            # Check for errors
+            # Check for errors in the response
             if echo "$RESPONSE" | grep -q "errors"; then
               echo "::error::Deployment failed for $FILE_PATH"
               echo "$RESPONSE"
