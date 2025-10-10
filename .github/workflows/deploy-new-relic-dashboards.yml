@@ -72,16 +72,15 @@ jobs:
 
             # Build GraphQL mutation using valid return fields
             GRAPHQL_MUTATION=$(jq -n \
-              --arg acctId "$ACCOUNT_ID" \
-              --arg dashboard "$DASHBOARD_CONTENT" \
+               --arg acctId "$ACCOUNT_ID" \
+               --arg dashboard "$DASHBOARD_CONTENT" \
               '{
-                query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }",
-                variables: {
-                  accountId: ($acctId | tonumber),
-                  dashboardJson: ($dashboard | fromjson)
-                }
-              }')
-
+               query: "mutation($dashboardJson: DashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }",
+               variables: {
+                 accountId: ($acctId | tonumber),
+                 dashboardJson: ($dashboard | fromjson)
+                 }
+                }')
             # Execute the API request
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
