@@ -78,8 +78,20 @@ jobs:
               echo "Found existing dashboard with GUID: $GUID"
             fi
 
-            # Use the dashboardCreate mutation if GUID is empty, otherwise use dashboardUpdate
-            if [ -z "$GUID" ]; then
+            # Ensure GUID is treated as a valid non-null identifier
+            if [ -n "$GUID" ]; then
+              # Use the dashboardUpdate mutation if GUID is provided
+              GRAPHQL_MUTATION=$(jq -n \
+                 --arg dashboard "$DASHBOARD_CONTENT" \
+                 --arg guid "$GUID" \
+                '{
+                 query: "mutation($dashboardJson: DashboardInput!, $guid: EntityGuid!) { dashboardUpdate(guid: $guid, dashboard: $dashboardJson) { entityResult { guid } } }",
+                 variables: {
+                   dashboardJson: ($dashboard | fromjson),
+                   guid: $guid
+                   }
+                }')
+            else
               # Create a new dashboard if GUID is empty
               GRAPHQL_MUTATION=$(jq -n \
                  --arg dashboard "$DASHBOARD_CONTENT" \
@@ -87,18 +99,6 @@ jobs:
                  query: "mutation($dashboardJson: DashboardInput!) { dashboardCreate(dashboard: $dashboardJson) { entityResult { guid } } }",
                  variables: {
                    dashboardJson: ($dashboard | fromjson)
-                   }
-                }')
-            else
-              # Update the existing dashboard if GUID is provided
-              GRAPHQL_MUTATION=$(jq -n \
-                 --arg dashboard "$DASHBOARD_CONTENT" \
-                 --arg guid "$GUID" \
-                '{
-                 query: "mutation($dashboardJson: DashboardInput!, $guid: String!) { dashboardUpdate(guid: $guid, dashboard: $dashboardJson) { entityResult { guid } } }",
-                 variables: {
-                   dashboardJson: ($dashboard | fromjson),
-                   guid: $guid
                    }
                 }')
             fi
