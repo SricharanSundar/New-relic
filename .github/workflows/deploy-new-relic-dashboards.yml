@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Dashboards/**'  # Track all dashboard JSON files
+      - 'Dashboards/**'
 
   workflow_dispatch:
 
@@ -102,6 +102,7 @@ jobs:
                 -d "${GRAPHQL_MUTATION}")
 
               # Check for errors in the response
+              echo "API Response: $RESPONSE"
               if echo "$RESPONSE" | grep -q "errors"; then
                 echo "::error::Creation failed for $FILE_PATH"
                 echo "$RESPONSE"
