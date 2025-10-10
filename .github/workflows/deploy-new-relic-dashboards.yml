@@ -138,6 +138,9 @@ jobs:
                 -H "API-Key: ${API_KEY}" \
                 -d "${GRAPHQL_MUTATION}")
 
+              # Debug: Log the response
+              echo "API Response: $RESPONSE"
+
               # Check for errors in the response
               if echo "$RESPONSE" | grep -q "errors"; then
                 echo "::error::Update failed for $FILE_PATH"
