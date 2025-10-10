@@ -2,6 +2,8 @@
   {
     "filePath": "Dashboards/DJ-sri-prod/dot-net.json",
     "accountId": "4487288",
-    "apiKeySecretName": "DJ_SRI_PROD_ACCOUNT_1_API_KEY"
+    "apiKeySecretName": "DJ_SRI_PROD_ACCOUNT_1_API_KEY",
+    "name": ".NET",
+    "guid": "NDQ4NzI4OHxWSVp8REFTSEJPQVJEfGRhOjExNDExMDY2"
   }
 ]
