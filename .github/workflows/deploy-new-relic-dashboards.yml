@@ -1,5 +1,3 @@
-name: Deploy New Relic Dashboards via JSON
-
 on:
   push:
     branches:
@@ -19,11 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up jq
-        run: |
-          sudo apt-get install jq
-
-      - name: Deploy or Create Dashboards
+      - name: Deploy Modified or All Dashboards via Manifest
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
@@ -41,26 +35,24 @@ jobs:
 
           echo "------------------------------------------------------"
 
-          # Loop through each modified JSON dashboard file and deploy
-          for FILE_PATH in $(echo "$MODIFIED_FILES" | tr '\n' ' '); do
-            # Read the content of the dashboard JSON file
-            DASHBOARD_CONTENT=$(cat "$FILE_PATH")
+          # Loop through each manifest entry
+          jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do
+            FILE_PATH=$(echo "$entry" | jq -r '.filePath')
 
-            # Extract the GUID from the JSON file (it can be null)
-            DASHBOARD_GUID=$(echo "$DASHBOARD_CONTENT" | jq -r '.guid')
+            # Skip unmodified files in push event
+            if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
+              continue
+            fi
 
-            # Extract account ID and API Key
-            ACCOUNT_ID=$(echo "$DASHBOARD_CONTENT" | jq -r '.accountId')
-            API_KEY_SECRET_NAME=$(echo "$DASHBOARD_CONTENT" | jq -r '.apiKeySecretName')
+            ACCOUNT_ID=$(echo "$entry" | jq -r '.accountId')
+            API_KEY_SECRET_NAME=$(echo "$entry" | jq -r '.apiKeySecretName')
             API_KEY=$(echo "$ALL_SECRETS" | jq -r ".\"$API_KEY_SECRET_NAME\"")
 
-            # Ensure the API key is available
             if [ -z "$API_KEY" ] || [ "$API_KEY" == "null" ]; then
               echo "::error::Secret '$API_KEY_SECRET_NAME' could not be found."
               exit 1
             fi
 
-            # Ensure the file exists
             if [ ! -f "$FILE_PATH" ]; then
               echo "::error::Dashboard file '$FILE_PATH' not found."
               exit 1
@@ -68,88 +60,39 @@ jobs:
 
             echo "Deploying: $FILE_PATH to Account ID: $ACCOUNT_ID"
 
-            # Ensure the JSON is valid
+            # Read and validate JSON
+            DASHBOARD_CONTENT=$(cat "$FILE_PATH")
             echo "$DASHBOARD_CONTENT" | jq . > /dev/null
             if [ $? -ne 0 ]; then
               echo "::error::Invalid JSON in $FILE_PATH"
               exit 1
             fi
 
-            # If GUID is null or missing, create a new dashboard
-            if [ "$DASHBOARD_GUID" == "null" ] || [ -z "$DASHBOARD_GUID" ]; then
-              echo "No GUID found, creating a new dashboard..."
-
-              # GraphQL mutation to create a new dashboard
-              GRAPHQL_MUTATION=$(jq -n \
-                --arg acctId "$ACCOUNT_ID" \
-                --arg dashboard "$DASHBOARD_CONTENT" \
-                '{
-                  query: "mutation($dashboardJson: DashboardInput!, $accountId: Int!) { 
-                            dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { 
-                              entityResult { guid } 
-                            } 
-                          }",
-                  variables: {
-                    accountId: ($acctId | tonumber),
-                    dashboardJson: ($dashboard | fromjson)
-                    }
+            # Build GraphQL mutation using valid return fields
+            GRAPHQL_MUTATION=$(jq -n \
+               --arg acctId "$ACCOUNT_ID" \
+               --arg dashboard "$DASHBOARD_CONTENT" \
+              '{
+               query: "mutation($dashboardJson: DashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { entityResult { guid } } }",
+               variables: {
+                 accountId: ($acctId | tonumber),
+                 dashboardJson: ($dashboard | fromjson)
+                 }
                 }')
+            # Execute the API request
+            RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
+              -H "Content-Type: application/json" \
+              -H "API-Key: ${API_KEY}" \
+              -d "${GRAPHQL_MUTATION}")
 
-              # Send the GraphQL request to create the dashboard
-              RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
-                -H "Content-Type: application/json" \
-                -H "API-Key: ${API_KEY}" \
-                -d "${GRAPHQL_MUTATION}")
-
-              # Check for errors in the response
-              echo "API Response: $RESPONSE"
-              if echo "$RESPONSE" | grep -q "errors"; then
-                echo "::error::Creation failed for $FILE_PATH"
-                echo "$RESPONSE"
-                exit 1
-              else
-                # Successful creation, extract the new GUID
-                NEW_GUID=$(echo "$RESPONSE" | jq -r '.data.dashboardCreate.entityResult.guid')
-                echo "✅ Successfully created a new dashboard with GUID: $NEW_GUID"
-              fi
+            # Check for errors in the response
+            if echo "$RESPONSE" | grep -q "errors"; then
+              echo "::error::Deployment failed for $FILE_PATH"
+              echo "$RESPONSE"
+              exit 1
             else
-              echo "Updating existing dashboard with GUID: $DASHBOARD_GUID..."
-
-              # GraphQL mutation to update the existing dashboard
-              GRAPHQL_MUTATION=$(jq -n \
-                --arg acctId "$ACCOUNT_ID" \
-                --arg guid "$DASHBOARD_GUID" \
-                --arg dashboard "$DASHBOARD_CONTENT" \
-                '{
-                  query: "mutation($dashboardGuid: String!, $dashboardJson: DashboardInput!, $accountId: Int!) { 
-                            dashboardUpdate(accountId: $accountId, guid: $dashboardGuid, dashboard: $dashboardJson) { 
-                              entityResult { guid } 
-                            } 
-                          }",
-                  variables: {
-                    dashboardGuid: $guid,
-                    accountId: ($acctId | tonumber),
-                    dashboardJson: ($dashboard | fromjson)
-                    }
-                }')
-
-              # Send the GraphQL request to update the dashboard
-              RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
-                -H "Content-Type: application/json" \
-                -H "API-Key: ${API_KEY}" \
-                -d "${GRAPHQL_MUTATION}")
-
-              # Debug: Log the response
-              echo "API Response: $RESPONSE"
-
-              # Check for errors in the response
-              if echo "$RESPONSE" | grep -q "errors"; then
-                echo "::error::Update failed for $FILE_PATH"
-                echo "$RESPONSE"
-                exit 1
-              else
-                echo "✅ Successfully updated the dashboard with GUID: $DASHBOARD_GUID"
-              fi
+              echo "✅ Successfully deployed $FILE_PATH to Account $ACCOUNT_ID"
+              echo "Response: $RESPONSE"
             fi
 
             echo "------------------------------------------------------"
