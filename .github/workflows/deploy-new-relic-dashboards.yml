@@ -72,24 +72,36 @@ jobs:
             # Check if GUID is provided, otherwise create a new dashboard
             if [ "$GUID" == "null" ] || [ -z "$GUID" ]; then
               echo "No GUID provided. A new dashboard will be created."
+              # Use dashboardCreate mutation if no GUID is provided
               GUID=""
             else
               echo "Found existing dashboard with GUID: $GUID"
             fi
 
-            # Build GraphQL mutation for update or create
-            GRAPHQL_MUTATION=$(jq -n \
-               --arg acctId "$ACCOUNT_ID" \
-               --arg dashboard "$DASHBOARD_CONTENT" \
-               --arg guid "$GUID" \
-              '{
-               query: "mutation($dashboardJson: DashboardInput!, $accountId: Int!, $guid: String) { dashboardUpdate(accountId: $accountId, dashboard: $dashboardJson, guid: $guid) { entityResult { guid } } }",
-               variables: {
-                 accountId: ($acctId | tonumber),
-                 dashboardJson: ($dashboard | fromjson),
-                 guid: $guid
-                 }
+            # Use the dashboardCreate mutation if GUID is empty, otherwise use dashboardUpdate
+            if [ -z "$GUID" ]; then
+              # Create a new dashboard if GUID is empty
+              GRAPHQL_MUTATION=$(jq -n \
+                 --arg dashboard "$DASHBOARD_CONTENT" \
+                '{
+                 query: "mutation($dashboardJson: DashboardInput!) { dashboardCreate(dashboard: $dashboardJson) { entityResult { guid } } }",
+                 variables: {
+                   dashboardJson: ($dashboard | fromjson)
+                   }
                 }')
+            else
+              # Update the existing dashboard if GUID is provided
+              GRAPHQL_MUTATION=$(jq -n \
+                 --arg dashboard "$DASHBOARD_CONTENT" \
+                 --arg guid "$GUID" \
+                '{
+                 query: "mutation($dashboardJson: DashboardInput!, $guid: String!) { dashboardUpdate(guid: $guid, dashboard: $dashboardJson) { entityResult { guid } } }",
+                 variables: {
+                   dashboardJson: ($dashboard | fromjson),
+                   guid: $guid
+                   }
+                }')
+            fi
 
             # Execute the API request
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
