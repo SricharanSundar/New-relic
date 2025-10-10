@@ -91,6 +91,31 @@ jobs:
                    guid: $guid
                    }
                 }')
+              # Execute the API request
+              RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
+                -H "Content-Type: application/json" \
+                -H "API-Key: ${API_KEY}" \
+                -d "${GRAPHQL_MUTATION}")
+
+              # Check for errors in the response
+              if echo "$RESPONSE" | grep -q "errors"; then
+                # If we get a DASHBOARD_NOT_FOUND error, we will create a new dashboard instead of failing
+                if echo "$RESPONSE" | grep -q "DASHBOARD_NOT_FOUND"; then
+                  echo "::warning::Dashboard not found with GUID: $GUID. Creating a new dashboard instead."
+                  GRAPHQL_MUTATION=$(jq -n \
+                     --arg dashboard "$DASHBOARD_CONTENT" \
+                    '{
+                     query: "mutation($dashboardJson: DashboardInput!) { dashboardCreate(dashboard: $dashboardJson) { entityResult { guid } } }",
+                     variables: {
+                       dashboardJson: ($dashboard | fromjson)
+                       }
+                    }')
+                else
+                  echo "::error::Deployment failed for $FILE_PATH"
+                  echo "$RESPONSE"
+                  exit 1
+                fi
+              fi
             else
               # Create a new dashboard if GUID is empty
               GRAPHQL_MUTATION=$(jq -n \
