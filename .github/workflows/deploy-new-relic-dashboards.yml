@@ -12,32 +12,36 @@ on:
 jobs:
   deploy-dashboards:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Deploy Modified/All Dashboards Based on Manifest
+      - name: Deploy Modified or All Dashboards via Manifest
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
+          # Determine which dashboards to deploy
           if [ "${{ github.event_name }}" == "push" ]; then
             MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD | grep 'Dashboards/.*\.json$')
             if [ -z "$MODIFIED_FILES" ]; then
               echo "No dashboard JSON files were modified in the push. Exiting."
               exit 0
             fi
-            echo "Processing modified files from push: $MODIFIED_FILES"
+            echo "Modified dashboards in push: $MODIFIED_FILES"
           else
-            echo "Manual trigger detected. All files in the manifest will be checked for deployment."
+            echo "Manual trigger detected. All files in the manifest will be deployed."
           fi
 
           echo "------------------------------------------------------"
 
+          # Loop over each entry in the manifest
           jq -r -c '.[]' Dashboards/manifest.json | while read -r entry; do
             FILE_PATH=$(echo "$entry" | jq -r '.filePath')
 
+            # Skip unchanged files during push
             if [ "${{ github.event_name }}" == "push" ] && ! echo "$MODIFIED_FILES" | grep -q "^$FILE_PATH$"; then
               continue
             fi
@@ -47,39 +51,52 @@ jobs:
             API_KEY=$(echo "$ALL_SECRETS" | jq -r ".\"$API_KEY_SECRET_NAME\"")
 
             if [ -z "$API_KEY" ] || [ "$API_KEY" == "null" ]; then
-                echo "::error::Secret '$API_KEY_SECRET_NAME' could not be found."
-                exit 1
+              echo "::error::Secret '$API_KEY_SECRET_NAME' could not be found."
+              exit 1
             fi
 
-            echo "Deploying changes for: $FILE_PATH"
-            echo "Target Account ID: $ACCOUNT_ID"
+            if [ ! -f "$FILE_PATH" ]; then
+              echo "::error::Dashboard file '$FILE_PATH' not found."
+              exit 1
+            fi
 
-            # === SCRIPT UPDATE START ===
-            # This new method uses jq to safely build the GraphQL payload, preventing parsing errors.
-            # 1. Read the dashboard JSON content.
+            echo "Deploying: $FILE_PATH to Account ID: $ACCOUNT_ID"
+
+            # Read and validate JSON
             DASHBOARD_CONTENT=$(cat "$FILE_PATH")
-            # 2. Build the final GraphQL mutation using jq to handle special characters correctly.
+            echo "$DASHBOARD_CONTENT" | jq . > /dev/null
+            if [ $? -ne 0 ]; then
+              echo "::error::Invalid JSON in $FILE_PATH"
+              exit 1
+            fi
+
+            # Build GraphQL mutation payload
             GRAPHQL_MUTATION=$(jq -n \
               --arg acctId "$ACCOUNT_ID" \
               --arg dashboard "$DASHBOARD_CONTENT" \
-              '{query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreateOrUpdate(accountId: $accountId, dashboard: $dashboardJson) { guid } }", variables: {accountId: $acctId | tonumber, dashboardJson: $dashboard}}')
-            # === SCRIPT UPDATE END ===
+              '{
+                query: "mutation($dashboardJson: NerdletDashboardInput!, $accountId: Int!) { dashboardCreate(accountId: $accountId, dashboard: $dashboardJson) { guid name } }",
+                variables: {
+                  accountId: ($acctId | tonumber),
+                  dashboardJson: ($dashboard | fromjson)
+                }
+              }')
 
-            # Use a variable to store the curl response to check for errors
+            # Execute API request
             RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
               -H "Content-Type: application/json" \
               -H "API-Key: ${API_KEY}" \
               -d "${GRAPHQL_MUTATION}")
 
-            # Check if the response contains the word "errors"
+            # Check for errors
             if echo "$RESPONSE" | grep -q "errors"; then
-              echo "::error::API call failed for $FILE_PATH. Response from New Relic:"
+              echo "::error::Deployment failed for $FILE_PATH"
               echo "$RESPONSE"
               exit 1
             else
-              echo "Successfully deployed $FILE_PATH to Account ID $ACCOUNT_ID."
-              echo "Response from New Relic: $RESPONSE"
+              echo "✅ Successfully deployed $FILE_PATH to Account $ACCOUNT_ID"
+              echo "Response: $RESPONSE"
             fi
+
             echo "------------------------------------------------------"
           done
- 
