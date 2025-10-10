@@ -69,18 +69,11 @@ jobs:
               exit 1
             fi
 
-            # Check if GUID is provided, otherwise create a new dashboard
-            if [ "$GUID" == "null" ] || [ -z "$GUID" ]; then
-              echo "No GUID provided. A new dashboard will be created."
-              # Use dashboardCreate mutation if no GUID is provided
-              GUID=""
-            else
-              echo "Found existing dashboard with GUID: $GUID"
-            fi
-
-            # If GUID is present, update the existing dashboard
+            # If GUID is present, attempt to update the existing dashboard
             if [ -n "$GUID" ]; then
-              # Use the dashboardUpdate mutation, without accountId
+              echo "Attempting to update existing dashboard with GUID: $GUID"
+
+              # Update the dashboard (no accountId needed)
               GRAPHQL_MUTATION=$(jq -n \
                  --arg dashboard "$DASHBOARD_CONTENT" \
                  --arg guid "$GUID" \
@@ -97,29 +90,20 @@ jobs:
                 -H "API-Key: ${API_KEY}" \
                 -d "${GRAPHQL_MUTATION}")
 
-              # Check for errors in the response
+              # Check for errors in the response and log it for further inspection
+              echo "API Response: $RESPONSE"
+              
               if echo "$RESPONSE" | grep -q "errors"; then
-                # If we get a DASHBOARD_NOT_FOUND error, we will create a new dashboard instead of failing
-                if echo "$RESPONSE" | grep -q "DASHBOARD_NOT_FOUND"; then
-                  echo "::warning::Dashboard not found with GUID: $GUID. Creating a new dashboard instead."
-                  GRAPHQL_MUTATION=$(jq -n \
-                     --arg dashboard "$DASHBOARD_CONTENT" \
-                     --arg accountId "$ACCOUNT_ID" \
-                    '{
-                     query: "mutation($dashboardJson: DashboardInput!, $accountId: Int!) { dashboardCreate(dashboard: $dashboardJson, accountId: $accountId) { entityResult { guid } } }",
-                     variables: {
-                       dashboardJson: ($dashboard | fromjson),
-                       accountId: ($accountId | tonumber)
-                       }
-                    }')
-                else
-                  echo "::error::Deployment failed for $FILE_PATH"
-                  echo "$RESPONSE"
-                  exit 1
-                fi
+                echo "::error::Deployment failed for $FILE_PATH"
+                echo "$RESPONSE"
+                exit 1
+              else
+                echo "✅ Successfully updated $FILE_PATH with GUID $GUID"
               fi
             else
-              # If GUID is not present, create a new dashboard
+              echo "::warning::No GUID provided. Creating a new dashboard."
+              
+              # If no GUID, create a new dashboard
               GRAPHQL_MUTATION=$(jq -n \
                  --arg dashboard "$DASHBOARD_CONTENT" \
                  --arg accountId "$ACCOUNT_ID" \
@@ -130,22 +114,23 @@ jobs:
                    accountId: ($accountId | tonumber)
                    }
                 }')
-            fi
 
-            # Execute the API request
-            RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
-              -H "Content-Type: application/json" \
-              -H "API-Key: ${API_KEY}" \
-              -d "${GRAPHQL_MUTATION}")
+              # Execute the API request for creation
+              RESPONSE=$(curl -s -X POST https://api.newrelic.com/graphql \
+                -H "Content-Type: application/json" \
+                -H "API-Key: ${API_KEY}" \
+                -d "${GRAPHQL_MUTATION}")
 
-            # Check for errors in the response
-            if echo "$RESPONSE" | grep -q "errors"; then
-              echo "::error::Deployment failed for $FILE_PATH"
-              echo "$RESPONSE"
-              exit 1
-            else
-              echo "✅ Successfully deployed $FILE_PATH to Account $ACCOUNT_ID"
-              echo "Response: $RESPONSE"
+              # Check for errors in the response and log it
+              echo "API Response: $RESPONSE"
+              
+              if echo "$RESPONSE" | grep -q "errors"; then
+                echo "::error::Deployment failed for $FILE_PATH"
+                echo "$RESPONSE"
+                exit 1
+              else
+                echo "✅ Successfully created new dashboard from $FILE_PATH"
+              fi
             fi
 
             echo "------------------------------------------------------"
