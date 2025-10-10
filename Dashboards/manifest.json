@@ -1,10 +1,5 @@
 [
   {
-    "filePath": "Dashboards/DJ-sri-prod/sricharan.json",
-    "accountId": "4487288",
-    "apiKeySecretName": "DJ_SRI_PROD_ACCOUNT_1_API_KEY"
-  },
-  {
     "filePath": "Dashboards/DJ-sri-prod/dot-net.json",
     "accountId": "4487288",
     "apiKeySecretName": "DJ_SRI_PROD_ACCOUNT_1_API_KEY"
