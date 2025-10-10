@@ -78,19 +78,17 @@ jobs:
               echo "Found existing dashboard with GUID: $GUID"
             fi
 
-            # Ensure GUID is treated as a valid non-null identifier
+            # If GUID is present, update the existing dashboard
             if [ -n "$GUID" ]; then
-              # Use the dashboardUpdate mutation if GUID is provided
+              # Use the dashboardUpdate mutation, without accountId
               GRAPHQL_MUTATION=$(jq -n \
                  --arg dashboard "$DASHBOARD_CONTENT" \
                  --arg guid "$GUID" \
-                 --arg accountId "$ACCOUNT_ID" \
                 '{
-                 query: "mutation($dashboardJson: DashboardInput!, $guid: EntityGuid!, $accountId: Int!) { dashboardUpdate(guid: $guid, dashboard: $dashboardJson, accountId: $accountId) { entityResult { guid } } }",
+                 query: "mutation($dashboardJson: DashboardInput!, $guid: EntityGuid!) { dashboardUpdate(guid: $guid, dashboard: $dashboardJson) { entityResult { guid } } }",
                  variables: {
                    dashboardJson: ($dashboard | fromjson),
-                   guid: $guid,
-                   accountId: ($accountId | tonumber)
+                   guid: $guid
                    }
                 }')
               # Execute the API request
@@ -121,7 +119,7 @@ jobs:
                 fi
               fi
             else
-              # Create a new dashboard if GUID is empty
+              # If GUID is not present, create a new dashboard
               GRAPHQL_MUTATION=$(jq -n \
                  --arg dashboard "$DASHBOARD_CONTENT" \
                  --arg accountId "$ACCOUNT_ID" \
